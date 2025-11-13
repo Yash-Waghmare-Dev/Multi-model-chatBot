@@ -44,9 +44,11 @@ VITE_GOOGLE_PROJECT_ID=your-google-project-id  # For translations
 ```
 
 ### Required Variables
+
 - `VITE_WEBHOOK_URL`: The webhook endpoint for the n8n agent
 
 ### Optional Variables
+
 - `VITE_GOOGLE_PROJECT_ID`: Google Cloud project ID for text translation
 
 ## Installation
@@ -100,11 +102,11 @@ Expected response:
 
 ### Category Mapping
 
-| Internal Key | Webhook Value |
-|-------------|---------------|
+| Internal Key   | Webhook Value  |
+| -------------- | -------------- |
 | `share-market` | `share-market` |
-| `astrology` | `Astrology` |
-| `wellness` | `wellness` |
+| `astrology`    | `Astrology`    |
+| `wellness`     | `wellness`     |
 
 ## Error Handling
 
@@ -133,21 +135,25 @@ Expected response:
 ## Troubleshooting
 
 ### Translation not working
+
 - Verify `VITE_GOOGLE_PROJECT_ID` is set in environment
 - Check Google Cloud credentials
 
 ### Webhook requests failing
+
 - Verify `VITE_WEBHOOK_URL` is correct
 - Check CORS settings on webhook server
 - Review browser console for detailed errors
 
 ### Speech synthesis not working
+
 - Ensure browser supports Web Speech API
 - Check system audio settings
 
 ## Production Deployment
 
 1. Build the project:
+
    ```bash
    npm run build
    ```

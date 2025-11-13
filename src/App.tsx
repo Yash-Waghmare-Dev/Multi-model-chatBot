@@ -1,4 +1,10 @@
-import { useState, type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+} from "react";
 import "./App.css";
 import type { CategoryKey } from "./types";
 import { CategorySelection } from "./components/CategorySelection";
@@ -8,7 +14,9 @@ import { useChat } from "./hooks/useChat";
 import { useSpeech } from "./hooks/useSpeech";
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(
+    null
+  );
   const [inputValue, setInputValue] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("en");
 

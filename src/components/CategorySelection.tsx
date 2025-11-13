@@ -5,7 +5,9 @@ interface CategorySelectionProps {
   onSelectCategory: (category: CategoryKey) => void;
 }
 
-export const CategorySelection = ({ onSelectCategory }: CategorySelectionProps) => {
+export const CategorySelection = ({
+  onSelectCategory,
+}: CategorySelectionProps) => {
   return (
     <section className="category-selection">
       <header className="section-header">

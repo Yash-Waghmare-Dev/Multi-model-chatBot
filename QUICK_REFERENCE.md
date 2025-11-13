@@ -28,14 +28,14 @@ VITE_WEBHOOK_URL=your-webhook-url
 
 ## 📁 Important Files
 
-| File | Purpose |
-|------|---------|
-| `src/App.tsx` | Main app (87 lines) |
-| `src/components/ErrorBoundary.tsx` | Error handling |
-| `src/config/index.ts` | Environment setup |
-| `src/utils/logger.ts` | Production logging |
-| `.env.example` | Environment template |
-| `PRODUCTION_README.md` | Full guide |
+| File                               | Purpose              |
+| ---------------------------------- | -------------------- |
+| `src/App.tsx`                      | Main app (87 lines)  |
+| `src/components/ErrorBoundary.tsx` | Error handling       |
+| `src/config/index.ts`              | Environment setup    |
+| `src/utils/logger.ts`              | Production logging   |
+| `.env.example`                     | Environment template |
+| `PRODUCTION_README.md`             | Full guide           |
 
 ## 🔧 npm Scripts
 
@@ -50,21 +50,23 @@ npm run pre-deploy   # Full pre-deployment check
 
 ## 📊 Before/After
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Errors | 4 | 0 ✅ |
-| Component Lines | 543 | 87 |
-| Type Coverage | 85% | 100% ✅ |
-| Files | 1 | 10 ✅ |
+| Metric          | Before | After   |
+| --------------- | ------ | ------- |
+| Errors          | 4      | 0 ✅    |
+| Component Lines | 543    | 87      |
+| Type Coverage   | 85%    | 100% ✅ |
+| Files           | 1      | 10 ✅   |
 
 ## ⚙️ Environment Variables
 
 **Required:**
+
 ```
 VITE_WEBHOOK_URL=https://...
 ```
 
 **Optional:**
+
 ```
 VITE_GOOGLE_PROJECT_ID=...
 ```

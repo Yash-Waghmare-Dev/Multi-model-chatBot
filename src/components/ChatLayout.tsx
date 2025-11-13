@@ -31,9 +31,16 @@ export const ChatLayout = ({
   onReset,
 }: ChatLayoutProps) => {
   const chatWindowRef = useRef<HTMLDivElement | null>(null);
-  const { isTranslating, getDisplayText } = useTranslation(messages, selectedLanguage);
-  const { activeSpeechId, speechSynthesisSupported, handlePlayMessage, handlePause } =
-    useSpeech(selectedLanguage);
+  const { isTranslating, getDisplayText } = useTranslation(
+    messages,
+    selectedLanguage
+  );
+  const {
+    activeSpeechId,
+    speechSynthesisSupported,
+    handlePlayMessage,
+    handlePause,
+  } = useSpeech(selectedLanguage);
 
   useEffect(() => {
     if (!chatWindowRef.current) {
@@ -47,11 +54,7 @@ export const ChatLayout = ({
     <div className="chat-layout">
       <header className="chat-header">
         <div className="chat-header-left">
-          <button
-            type="button"
-            className="link-button"
-            onClick={onReset}
-          >
+          <button type="button" className="link-button" onClick={onReset}>
             ← Choose Category
           </button>
           <div className="chat-topic">
@@ -80,11 +83,7 @@ export const ChatLayout = ({
         </div>
       </header>
 
-      <section
-        className="chat-window"
-        aria-live="polite"
-        ref={chatWindowRef}
-      >
+      <section className="chat-window" aria-live="polite" ref={chatWindowRef}>
         {messages.length === 0 ? (
           <div className="empty-state">
             <h2>Say hello!</h2>
@@ -161,8 +160,8 @@ export const ChatLayout = ({
           </button>
         </form>
         <p className="input-hint">
-          Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd> +{" "}
-          <kbd>Enter</kbd> for a new line
+          Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd> + <kbd>Enter</kbd>{" "}
+          for a new line
         </p>
       </footer>
     </div>
