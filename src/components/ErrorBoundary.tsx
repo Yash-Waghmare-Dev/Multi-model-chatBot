@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import React from "react";
 
 /**
@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <h2>Something went wrong</h2>
           <p>Please refresh the page and try again.</p>
           <details style={{ whiteSpace: "pre-wrap" }}>
-            {this.state.error && this.state.error.toString()}
+            {this.state.error?.toString()}
           </details>
         </div>
       );

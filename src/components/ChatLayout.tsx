@@ -4,6 +4,7 @@ import type { CategoryKey, Message } from "../types";
 import { categories, languages } from "../constants";
 import { useTranslation } from "../hooks/useTranslation";
 import { useSpeech } from "../hooks/useSpeech";
+import { MessageItem } from "./MessageItem";
 
 interface ChatLayoutProps {
   selectedCategory: CategoryKey;
@@ -95,38 +96,18 @@ export const ChatLayout = ({
         ) : (
           messages.map((message) => {
             const displayText = getDisplayText(message);
-            const showAudioControls =
-              message.role === "agent" && speechSynthesisSupported;
 
             return (
-              <div key={message.id} className={`message ${message.role}`}>
-                <div className="message-bubble">
-                  <div className="message-text">{displayText}</div>
-                  {selectedLanguage !== "en" &&
-                    message.translations[selectedLanguage] && (
-                      <span className="translation-badge">Translated</span>
-                    )}
-                  {showAudioControls && (
-                    <div className="audio-controls">
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={() => handlePlayMessage(message, displayText)}
-                      >
-                        ▶
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={handlePause}
-                        disabled={activeSpeechId !== message.id}
-                      >
-                        ⏸
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <MessageItem
+                key={message.id}
+                message={message}
+                displayText={displayText}
+                speechSynthesisSupported={speechSynthesisSupported}
+                activeSpeechId={activeSpeechId}
+                selectedLanguage={selectedLanguage}
+                onPlayMessage={handlePlayMessage}
+                onPause={handlePause}
+              />
             );
           })
         )}
