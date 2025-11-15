@@ -41,9 +41,19 @@ export const useTranslation = (
   };
 
   useEffect(() => {
+    setTranslatedMessages((prev) => {
+      const prevIds = new Set(prev.map((message) => message.id));
+      const mergedMessages = messages.map((message) => {
+        const cached = prev.find((item) => item.id === message.id);
+        return cached ?? message;
+      });
+
+      // Remove stale entries that no longer exist in the source messages
+      return mergedMessages.filter((message) => prevIds.has(message.id) || messages.includes(message));
+    });
+
     if (selectedLanguage === "en") {
       setIsTranslating(false);
-      setTranslatedMessages(messages);
       return;
     }
 
@@ -97,11 +107,17 @@ export const useTranslation = (
     };
   }, [messages, selectedLanguage]);
 
-  const getDisplayText = (message: { text: string; translations: Record<string, string> }) => {
+  const getDisplayText = (message: {
+    id: string;
+    text: string;
+    translations: Record<string, string>;
+  }) => {
     if (selectedLanguage === "en") {
       return message.text;
     }
-    return message.translations[selectedLanguage] ?? message.text;
+
+    const translated = translatedMessages.find((item) => item.id === message.id);
+    return translated?.translations[selectedLanguage] ?? message.text;
   };
 
   return { isTranslating, getDisplayText, translatedMessages };

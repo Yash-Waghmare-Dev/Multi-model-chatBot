@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   useEffect,
 } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 import type { CategoryKey } from "./types";
 import { CategorySelection } from "./components/CategorySelection";
@@ -14,6 +15,7 @@ import { useChat } from "./hooks/useChat";
 import { useSpeech } from "./hooks/useSpeech";
 
 function App() {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(
     null
   );
@@ -26,6 +28,8 @@ function App() {
   const handleCategorySelect = (category: CategoryKey) => {
     setSelectedCategory(category);
     clearMessages();
+    setInputValue("");
+    navigate("/chat");
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -59,6 +63,7 @@ function App() {
     clearMessages();
     setInputValue("");
     cleanup();
+    navigate("/");
   };
 
   useEffect(() => {
@@ -67,27 +72,37 @@ function App() {
     };
   }, [cleanup]);
 
-  const isChatActive = Boolean(selectedCategory);
-
   return (
     <ErrorBoundary>
       <div className="app">
-        {!isChatActive ? (
-          <CategorySelection onSelectCategory={handleCategorySelect} />
-        ) : selectedCategory ? (
-          <ChatLayout
-            selectedCategory={selectedCategory}
-            messages={messages}
-            inputValue={inputValue}
-            isSending={isSending}
-            selectedLanguage={selectedLanguage}
-            onInputChange={handleInputChange}
-            onSubmit={handleSubmit}
-            onKeyDown={handleKeyDown}
-            onLanguageChange={handleLanguageChange}
-            onReset={handleReset}
+        <Routes>
+          <Route
+            path="/"
+            element={<CategorySelection onSelectCategory={handleCategorySelect} />}
           />
-        ) : null}
+          <Route
+            path="/chat"
+            element={
+              selectedCategory ? (
+                <ChatLayout
+                  selectedCategory={selectedCategory}
+                  messages={messages}
+                  inputValue={inputValue}
+                  isSending={isSending}
+                  selectedLanguage={selectedLanguage}
+                  onInputChange={handleInputChange}
+                  onSubmit={handleSubmit}
+                  onKeyDown={handleKeyDown}
+                  onLanguageChange={handleLanguageChange}
+                  onReset={handleReset}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </ErrorBoundary>
   );

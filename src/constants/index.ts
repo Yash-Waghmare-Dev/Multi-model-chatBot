@@ -26,11 +26,11 @@ export const categories: Category[] = [
 
 export const languages: Language[] = [
   { code: "en", label: "English", voice: "en-US" },
-  { code: "hi", label: "Hindi", voice: "hi-IN" },
-  { code: "mr", label: "Marathi", voice: "mr-IN" },
-  { code: "bn", label: "Bengali", voice: "bn-IN" },
-  { code: "ta", label: "Tamil", voice: "ta-IN" },
-  { code: "te", label: "Telugu", voice: "te-IN" },
+  { code: "es", label: "Spanish", voice: "es-ES" },
+  { code: "fr", label: "French", voice: "fr-FR" },
+  { code: "de", label: "German", voice: "de-DE" },
+  { code: "ja", label: "Japanese", voice: "ja-JP" },
+  { code: "pt", label: "Portuguese", voice: "pt-PT" },
 ];
 
 export const getCategoryForWebhook = (categoryKey: CategoryKey): string => {
