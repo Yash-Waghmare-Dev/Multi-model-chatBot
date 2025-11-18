@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
-import type { CategoryKey } from "./types";
+import type { CategoryKey, ModelType } from "./types";
 import { CategorySelection } from "./components/CategorySelection";
 import { ChatLayout } from "./components/ChatLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -21,8 +21,9 @@ function App() {
   );
   const [inputValue, setInputValue] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("n8n");
 
-  const { messages, isSending, sendMessage, clearMessages } = useChat();
+  const { messages, isSending, sendMessage, clearMessages, models } = useChat({ selectedModel });
   const { cleanup } = useSpeech(selectedLanguage);
 
   const handleCategorySelect = (category: CategoryKey) => {
@@ -39,7 +40,7 @@ function App() {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!isSending) {
-      void sendMessage(selectedCategory, inputValue);
+      void sendMessage(selectedCategory, inputValue, selectedModel);
       setInputValue("");
     }
   };
@@ -48,7 +49,7 @@ function App() {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       if (!isSending) {
-        void sendMessage(selectedCategory, inputValue);
+        void sendMessage(selectedCategory, inputValue, selectedModel);
         setInputValue("");
       }
     }
@@ -56,6 +57,10 @@ function App() {
 
   const handleLanguageChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedLanguage(event.target.value);
+  };
+
+  const handleModelChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedModel(event.target.value as ModelType);
   };
 
   const handleReset = () => {
@@ -94,6 +99,9 @@ function App() {
                   onSubmit={handleSubmit}
                   onKeyDown={handleKeyDown}
                   onLanguageChange={handleLanguageChange}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  models={models}
                   onReset={handleReset}
                 />
               ) : (

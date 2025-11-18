@@ -1,14 +1,47 @@
 import { useCallback, useRef, useState } from "react";
 import { WEBHOOK_URL, getCategoryForWebhook } from "../constants";
-import type { CategoryKey, Message } from "../types";
+import type { CategoryKey, Message, ModelType } from "../types";
 import { logger } from "../utils/logger";
+
+export interface ChatModel {
+  id: ModelType;
+  name: string;
+  description: string;
+}
+
+// Gemini API configuration
+const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const GEMINI_MODEL_NAME = 'gemini-2.5-flash-lite';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+
+if (!GEMINI_API_KEY) {
+  console.warn('Gemini API key is not set. Gemini model will not work without it.');
+}
+
+// Model configuration
+export const CHAT_MODELS: ChatModel[] = [
+  {
+    id: "n8n",
+    name: "N8N Agent",
+    description: "Default agent using N8N workflows"
+  },
+  {
+    id: "gemini",
+    name: "Gemini 2.5 Flash Lite",
+    description: "Google's Gemini 2.5 Flash Lite model for fast and efficient responses"
+  }
+];
 
 // Request timeout configuration
 const REQUEST_TIMEOUT = 60000; // 60 seconds
 const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY = 500; // milliseconds
 
-export const useChat = () => {
+interface UseChatProps {
+  selectedModel?: ModelType;
+}
+
+export const useChat = ({ selectedModel = "n8n" }: UseChatProps = {}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -25,7 +58,7 @@ export const useChat = () => {
       retryCount = 0
     ): Promise<Response> => {
       const { timeout = REQUEST_TIMEOUT, ...fetchOptions } = options;
-      
+
       // Create abort controller for timeout
       abortControllerRef.current = new AbortController();
       const timeoutId = setTimeout(
@@ -42,14 +75,14 @@ export const useChat = () => {
         return response;
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         // Retry logic for network failures
         if (retryCount < RETRY_ATTEMPTS && error instanceof Error && error.name !== "AbortError") {
           logger.warn(`Retrying request (attempt ${retryCount + 1}/${RETRY_ATTEMPTS})`);
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
           return fetchWithTimeout(url, options, retryCount + 1);
         }
-        
+
         throw error;
       }
     },
@@ -66,17 +99,22 @@ export const useChat = () => {
     }
 
     // Handle text responses
-    if (contentType.includes("text/")) {
-      const text = await response.text();
-      try {
-        return JSON.parse(text) as unknown;
-      } catch {
-        return { output: text };
-      }
+    const text = await response.text();
+    console.log('Parsing response text:', text);
+
+    if (!text) {
+      console.warn('Empty response received');
+      return { output: 'Empty response received from server' };
     }
 
-    // Default empty object
-    return {};
+    try {
+      const parsed = JSON.parse(text);
+      console.log('Parsed JSON response:', parsed);
+      return parsed;
+    } catch (e) {
+      console.warn('Failed to parse JSON response, treating as plain text');
+      return { output: text };
+    }
   }, []);
 
   // Extract agent text from response
@@ -97,8 +135,62 @@ export const useChat = () => {
     return "No response received.";
   }, []);
 
+  // Function to handle Gemini API call
+  const callGeminiAPI = useCallback(async (prompt: string) => {
+    if (!GEMINI_API_KEY) {
+      throw new Error("Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env file.");
+    }
+
+    console.log('Sending request to Gemini API with prompt:', prompt);
+
+    try {
+      const response = await fetchWithTimeout(
+        `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          }),
+        }
+      );
+
+      const responseText = await response.text();
+      console.log('Gemini API response status:', response.status, response.statusText);
+      console.log('Gemini API response body:', responseText);
+
+      if (!response.ok) {
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.error?.message || `Gemini API error: ${response.status} ${response.statusText}`);
+        } catch (e) {
+          throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${responseText}`);
+        }
+      }
+
+      const data = JSON.parse(responseText);
+      const responseTextContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!responseTextContent) {
+        console.warn('Unexpected Gemini API response format:', data);
+        throw new Error('Received unexpected response format from Gemini API');
+      }
+
+      return responseTextContent;
+    } catch (error) {
+      console.error('Gemini API call failed:', error);
+      throw new Error(`Gemini API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, []);
+
   const sendMessage = useCallback(
-    async (selectedCategory: CategoryKey | null, inputValue: string) => {
+    async (selectedCategory: CategoryKey | null, inputValue: string, model: ModelType = selectedModel) => {
       const trimmed = inputValue.trim();
       if (!trimmed || !selectedCategory) {
         return;
@@ -126,41 +218,68 @@ export const useChat = () => {
           translations: {},
         });
 
-        const response = await fetchWithTimeout(
-          WEBHOOK_URL,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              category: getCategoryForWebhook(selectedCategory),
-              text: trimmed,
-            }),
-            timeout: REQUEST_TIMEOUT,
+        let responseData: unknown;
+
+        if (model === 'gemini') {
+          const prompt = `You are a helpful assistant for the ${selectedCategory} category. The user asks: ${trimmed}`;
+          const geminiResponse = await callGeminiAPI(prompt);
+          responseData = { output: geminiResponse };
+        } else {
+          // For N8N webhook
+          if (!WEBHOOK_URL) {
+            throw new Error('Webhook URL is not configured');
           }
-        );
 
-        const data = await parseResponse(response);
+          const requestBody = {
+            category: getCategoryForWebhook(selectedCategory as CategoryKey),
+            text: trimmed,
+          };
 
-        if (!response.ok) {
-          const errorText =
-            typeof data === "object" && data && "error" in data
-              ? (data as { error: string }).error
-              : `Server error: ${response.status}`;
-          throw new Error(errorText);
+          console.log('Sending request to N8N webhook:', {
+            url: WEBHOOK_URL,
+            method: 'POST',
+            body: requestBody
+          });
+
+          const response = await fetchWithTimeout(
+            WEBHOOK_URL,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestBody),
+              timeout: REQUEST_TIMEOUT,
+            }
+          );
+
+          const responseText = await response.text();
+          console.log('N8N webhook response status:', response.status, response.statusText);
+          console.log('N8N webhook response body:', responseText);
+
+          if (!response.ok) {
+            throw new Error(`Webhook error: ${response.status} ${response.statusText} - ${responseText}`);
+          }
+
+          try {
+            responseData = JSON.parse(responseText);
+            console.log('Parsed N8N response data:', responseData);
+          } catch (e) {
+            console.error('Failed to parse N8N response:', e);
+            throw new Error('Received invalid JSON response from N8N webhook');
+          }
         }
 
-        const agentText = extractAgentText(data);
+        const agentText = extractAgentText(responseData);
 
         // Replace loading message with actual response
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === loadingMessageId
               ? {
-                  ...msg,
-                  text: agentText,
-                }
+                ...msg,
+                text: agentText,
+              }
               : msg
           )
         );
@@ -179,9 +298,9 @@ export const useChat = () => {
           prev.map((msg) =>
             msg.text === "Thinking..."
               ? {
-                  ...msg,
-                  text: `Sorry, I ran into an issue: ${errorMessage}`,
-                }
+                ...msg,
+                text: `Sorry, I ran into an issue: ${errorMessage}`,
+              }
               : msg
           )
         );
@@ -190,7 +309,7 @@ export const useChat = () => {
         abortControllerRef.current = null;
       }
     },
-    [fetchWithTimeout, parseResponse, extractAgentText, appendMessage]
+    [fetchWithTimeout, parseResponse, extractAgentText, appendMessage, selectedModel]
   );
 
   const clearMessages = useCallback(() => {
@@ -204,5 +323,6 @@ export const useChat = () => {
     sendMessage,
     appendMessage,
     clearMessages,
+    models: CHAT_MODELS as ChatModel[],
   };
 };

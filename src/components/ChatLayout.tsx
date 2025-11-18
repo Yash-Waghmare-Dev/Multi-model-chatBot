@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef } from "react";
-import type { CategoryKey, Message } from "../types";
+import type { CategoryKey, Message, ModelType, ChatModel } from "../types";
 import { categories, languages } from "../constants";
 import { useTranslation } from "../hooks/useTranslation";
 import { useSpeech } from "../hooks/useSpeech";
@@ -12,10 +12,13 @@ interface ChatLayoutProps {
   inputValue: string;
   isSending: boolean;
   selectedLanguage: string;
+  selectedModel: ModelType;
+  models: ChatModel[];
   onInputChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit: (event: FormEvent) => void;
   onKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onLanguageChange: (event: ChangeEvent<HTMLSelectElement>) => void;
+  onModelChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   onReset: () => void;
 }
 
@@ -25,10 +28,13 @@ export const ChatLayout = ({
   inputValue,
   isSending,
   selectedLanguage,
+  selectedModel,
+  models,
   onInputChange,
   onSubmit,
   onKeyDown,
   onLanguageChange,
+  onModelChange,
   onReset,
 }: ChatLayoutProps) => {
   const chatWindowRef = useRef<HTMLDivElement | null>(null);
@@ -66,21 +72,42 @@ export const ChatLayout = ({
           </div>
         </div>
         <div className="chat-header-right">
-          <label className="language-label" htmlFor="language-select">
-            Language
-          </label>
-          <select
-            id="language-select"
-            className="language-select"
-            value={selectedLanguage}
-            onChange={onLanguageChange}
-          >
-            {languages.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.label}
-              </option>
-            ))}
-          </select>
+          <div className="select-group">
+            <label className="select-label" htmlFor="model-select">
+              Model
+            </label>
+            <select
+              id="model-select"
+              className="select-control"
+              value={selectedModel}
+              onChange={onModelChange}
+              disabled={isSending}
+            >
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="select-group">
+            <label className="select-label" htmlFor="language-select">
+              Language
+            </label>
+            <select
+              id="language-select"
+              className="select-control"
+              value={selectedLanguage}
+              onChange={onLanguageChange}
+              disabled={isSending}
+            >
+              {languages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 
